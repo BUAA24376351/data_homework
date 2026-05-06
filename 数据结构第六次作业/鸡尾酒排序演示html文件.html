@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cocktail Sort 可视化（对标参考版）</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+<style>
+:root {
+  --card-width: 44px;
+  --card-gap: 8px;
+  --color-default: #3b82f6;
+  --color-compare: #f59e0b;
+  --color-swap: #ef4444;
+  --color-sorted: #22c55e;
+  --color-gold: #fbbf24;
+}
+
+.reveal { font-family: sans-serif; }
+.algo-controls { display:flex; justify-content:center; gap:8px; margin-bottom:12px; }
+.algo-controls input { padding:6px 10px; border-radius:8px; border:1px solid #ccc; }
+.algo-controls button { padding:6px 12px; border:none; border-radius:8px; background:#2563eb; color:#fff; cursor:pointer; }
+
+.viz-container {
+  display:flex; align-items:flex-end; justify-content:center;
+  height:300px; background:#f9fafb; border-radius:12px;
+}
+
+.card-wrapper { width:var(--card-width); margin-right:var(--card-gap); }
+.card {
+  width:100%; border-radius:6px; color:#fff; text-align:center;
+  background:var(--color-default);
+}
+
+.compare { background:var(--color-compare); }
+.swap { background:var(--color-swap); }
+.sorted-left { border:3px solid var(--color-gold); }
+.sorted-right { background:var(--color-sorted); }
+
+.info-panel { text-align:center; margin-top:10px; }
+.playback { text-align:center; margin-top:10px; }
+</style>
+</head>
+
+<body>
+<div class="reveal">
+<div class="slides">
+
+<section>
+<h2>Cocktail Sort（鸡尾酒排序）</h2>
+<div class="algo-controls">
+<input id="input" value="5,3,8,2" />
+<button onclick="generate()">生成数组</button>
+<button onclick="reset()">重置</button>
+</div>
+
+<div id="viz" class="viz-container"></div>
+
+<div class="info-panel">
+<div id="desc">点击生成开始</div>
+<div id="counter"></div>
+</div>
+
+<div class="playback">
+<button onclick="prev()">上一步</button>
+<button onclick="play()">自动播放</button>
+<button onclick="next()">下一步</button>
+</div>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+<script>
+Reveal.initialize();
+
+let steps = [];
+let idx = -1;
+let timer = null;
+
+function parse(str){return str.split(/[,，\s]+/).map(Number).filter(x=>!isNaN(x));}
+function copy(a){return JSON.parse(JSON.stringify(a));}
+
+function snapshot(arr,desc,focus=[],type='',l=-1,r=-1){
+ return {arr:copy(arr),desc,focus,type,l,r};
+}
+
+function gen(arr){
+ let res=[];
+ let a=arr.slice();
+ let l=0,r=a.length-1;
+ res.push(snapshot(a,'初始数组'));
+
+ while(l<r){
+  for(let i=l;i<r;i++){
+    res.push(snapshot(a,`左→右 比较 ${i} ${i+1}`,[i,i+1],'compare',l,r));
+    if(a[i]>a[i+1]){
+      [a[i],a[i+1]]=[a[i+1],a[i]];
+      res.push(snapshot(a,`交换 ${i} ${i+1}`,[i,i+1],'swap',l,r));
+    }
+  }
+  r--;
+
+  for(let i=r;i>l;i--){
+    res.push(snapshot(a,`右→左 比较 ${i} ${i-1}`,[i,i-1],'compare',l,r));
+    if(a[i]<a[i-1]){
+      [a[i],a[i-1]]=[a[i-1],a[i]];
+      res.push(snapshot(a,`交换 ${i} ${i-1}`,[i,i-1],'swap',l,r));
+    }
+  }
+  l++;
+ }
+ res.push(snapshot(a,'排序完成'));
+ return res;
+}
+
+function render(){
+ if(idx<0||!steps[idx]) return;
+ let v=document.getElementById('viz');
+ v.innerHTML='';
+ let s=steps[idx];
+ s.arr.forEach((x,i)=>{
+  let d=document.createElement('div');
+  d.className='card-wrapper';
+  let c=document.createElement('div');
+  c.className='card';
+  if(s.focus.includes(i)) c.classList.add(s.type);
+  if(i<s.l) c.classList.add('sorted-left');
+  if(i>s.r) c.classList.add('sorted-right');
+  c.style.height=(x*20+30)+'px';
+  c.innerText=x;
+  d.appendChild(c);
+  v.appendChild(d);
+ });
+ document.getElementById('desc').innerText=s.desc;
+ document.getElementById('counter').innerText=(idx+1)+'/'+steps.length;
+}
+
+function generate(){
+ let arr=parse(document.getElementById('input').value);
+ steps=gen(arr);
+ idx=0;
+ render();
+}
+function next(){if(idx<steps.length-1){idx++;render();}}
+function prev(){if(idx>0){idx--;render();}}
+function play(){
+ clearInterval(timer);
+ timer=setInterval(()=>{if(idx>=steps.length-1)clearInterval(timer);else next();},800);
+}
+function reset(){steps=[];idx=-1;document.getElementById('viz').innerHTML='';}
+</script>
+</body>
+</html>
