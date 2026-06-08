@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>AVL树构建与旋转实操</title>
+<style>
+body{font-family:"Microsoft YaHei",sans-serif;background:#f5f7fa;padding:20px}
+.wrap{max-width:1300px;margin:auto;background:#fff;padding:20px;border-radius:10px}
+button{padding:8px 16px;margin-right:8px}
+svg{border:1px solid #ccc;background:#fff}
+.info{background:#eef4ff;padding:10px;border-radius:8px;margin:10px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>AVL树构建与旋转实操</h1>
+<p><b>插入序列：</b>[30,20,10,25,40,35,50]</p>
+<button onclick="prevStep()">上一步</button>
+<button onclick="nextStep()">下一步</button>
+<span id="step"></span>
+<div id="info" class="info"></div>
+<svg id="tree" width="1200" height="520"></svg>
+
+<h2>最终中序遍历</h2>
+<p>10 → 20 → 25 → 30 → 35 → 40 → 50</p>
+<p>结果严格递增，BST性质保持不变。</p>
+</div>
+
+<script>
+const steps=[
+{t:"步骤1：插入30",d:"无失衡",n:[["30",600,80,"0"]],e:[],axis:null},
+{t:"步骤2：插入20",d:"无失衡",n:[["30",600,80,"1"],["20",450,180,"0"]],e:[[600,80,450,180]],axis:null},
+{t:"步骤3：插入10后（失衡前）",d:"LL失衡，失衡节点30(BF=+2)，旋转轴20（中间节点）",n:[["30",600,80,"2","red"],["20",470,180,"1","gold"],["10",340,280,"0"]],e:[[600,80,470,180],[470,180,340,280]],axis:"20"},
+{t:"步骤4：LL右旋后",d:"以20为轴执行右旋（30围绕20旋转）",n:[["20",600,80,"0","gold"],["10",470,180,"0"],["30",730,180,"0"]],e:[[600,80,470,180],[600,80,730,180]],axis:"20"},
+{t:"步骤5：插入25",d:"无失衡",n:[["20",600,80,"-1"],["10",470,180,"0"],["30",730,180,"1"],["25",650,300,"0"]],e:[[600,80,470,180],[600,80,730,180],[730,180,650,300]],axis:null},
+{t:"步骤6：插入40",d:"无失衡",n:[["20",600,80,"-1"],["10",470,180,"0"],["30",730,180,"0"],["25",650,300,"0"],["40",810,300,"0"]],e:[[600,80,470,180],[600,80,730,180],[730,180,650,300],[730,180,810,300]],axis:null},
+{t:"步骤7：插入35后（失衡前）",d:"RR失衡，失衡节点20(BF=-2)，旋转轴30（中间节点）",n:[["20",500,80,"-2","red"],["10",350,180,"0"],["30",650,180,"-1","gold"],["25",560,300,"0"],["40",760,300,"1"],["35",700,420,"0"]],e:[[500,80,350,180],[500,80,650,180],[650,180,560,300],[650,180,760,300],[760,300,700,420]],axis:"30"},
+{t:"步骤8：RR左旋后",d:"以30为轴执行左旋（20围绕30旋转）",n:[["30",600,80,"0","gold"],["20",430,200,"0"],["40",770,200,"1"],["10",320,330,"0"],["25",540,330,"0"],["35",680,330,"0"]],e:[[600,80,430,200],[600,80,770,200],[430,200,320,330],[430,200,540,330],[770,200,680,330]],axis:"30"},
+{t:"步骤9：插入50",d:"最终AVL树",n:[["30",600,80,"0"],["20",430,200,"0"],["40",770,200,"0"],["10",320,330,"0"],["25",540,330,"0"],["35",680,330,"0"],["50",900,330,"0"]],e:[[600,80,430,200],[600,80,770,200],[430,200,320,330],[430,200,540,330],[770,200,680,330],[770,200,900,330]],axis:null}
+];
+
+let i=0;
+function draw(){
+const s=steps[i];
+document.getElementById("step").innerHTML=" 第"+(i+1)+"/"+steps.length+"步";
+document.getElementById("info").innerHTML="<h3>"+s.t+"</h3><p>"+s.d+"</p>";
+const svg=document.getElementById("tree");
+svg.innerHTML="";
+s.e.forEach(x=>{
+let l=document.createElementNS("http://www.w3.org/2000/svg","line");
+l.setAttribute("x1",x[0]);l.setAttribute("y1",x[1]);l.setAttribute("x2",x[2]);l.setAttribute("y2",x[3]);
+l.setAttribute("stroke","black");svg.appendChild(l);
+});
+s.n.forEach(x=>{
+let c=document.createElementNS("http://www.w3.org/2000/svg","circle");
+c.setAttribute("cx",x[1]);c.setAttribute("cy",x[2]);c.setAttribute("r",28);
+c.setAttribute("fill",x[4]||"white");c.setAttribute("stroke","black");
+svg.appendChild(c);
+
+let t=document.createElementNS("http://www.w3.org/2000/svg","text");
+t.setAttribute("x",x[1]);t.setAttribute("y",x[2]+5);t.setAttribute("text-anchor","middle");
+t.textContent=x[0];svg.appendChild(t);
+
+let bf=document.createElementNS("http://www.w3.org/2000/svg","text");
+bf.setAttribute("x",x[1]+35);bf.setAttribute("y",x[2]-15);
+bf.textContent="BF="+x[3];svg.appendChild(bf);
+
+if(s.axis===x[0]){
+let a=document.createElementNS("http://www.w3.org/2000/svg","text");
+a.setAttribute("x",x[1]-20);a.setAttribute("y",x[2]-40);
+a.textContent="旋转轴";
+svg.appendChild(a);
+}
+});
+}
+function nextStep(){if(i<steps.length-1){i++;draw();}}
+function prevStep(){if(i>0){i--;draw();}}
+draw();
+</script>
+</body>
+</html>
